@@ -6,25 +6,31 @@ from fuzzywuzzy import fuzz
 import numpy as np
 import tflite_runtime.interpreter as tflite
 from PIL import Image
+from luma.led_matrix.device import max7219
+from luma.core.interface.serial import spi, noop
+from luma.core.render import canvas
+from luma.core.legacy import text
+from luma.core.virtual import viewport
+from luma.core.legacy.font import proportional, LCD_FONT
+import traceback
+from led import display_led, shutdown_led
+from movement import init_motion_sensor, detect_move
 
 def syntethise(contener_id):
-    pygame.mixer.init()
-
+    display_led(contener_id)
     if contener_id == 0:
-        pygame.mixer.music.load("sounds/generated/poubelle_autre.mp3")
+        pygame.mixer.music.load("sounds/voice/poubelle_marron.mp3")
         pygame.mixer.music.play()
-    elif contener_id == 1:
-        pygame.mixer.music.load("sounds/generated/poubelle_organique.mp3")
+    elif contener_id == 1:      
+        pygame.mixer.music.load("sounds/voice/poubelle_verte.mp3")
         pygame.mixer.music.play()
     elif contener_id == 2:
-        pygame.mixer.music.load("sounds/generated/poubelle_recyclage.mp3")
+        pygame.mixer.music.load("sounds/voice/poubelle_jaune.mp3")
         pygame.mixer.music.play()
     elif contener_id == 3:
-        pygame.mixer.music.load("sounds/generated/poubelle_verre.mp3")
+        pygame.mixer.music.load("sounds/voice/poubelle_bleu.mp3")
         pygame.mixer.music.play()
-    pygame.time.delay(15000)
-    pygame.mixer.music.load("sounds/generated/merci.mp3")
-    pygame.mixer.music.play()
+
     pygame.time.delay(5000)
 
 
@@ -50,36 +56,50 @@ def predict_contener():
 
 def take_picture():
     pygame.mixer.init()
-    pygame.mixer.music.load("sounds/generated/photo.mp3")
+    pygame.mixer.music.load("sounds/voice/photo.mp3")
     pygame.mixer.music.play()
-    pygame.time.delay(5000)
-    camera = PiCamera()
-    sleep(5)
-    camera.capture("trash.jpg")
-    
+    pygame.time.delay(4000)
+
+    my_file = open('trash.jpg', 'wb')
+    with PiCamera() as camera:
+        camera.rotation = 90
+        camera.resolution = (640, 480)
+        camera.start_preview()
+        sleep(3)
+        camera.capture(my_file)
+    my_file.close()
+
+def scenario_1():
+    pygame.mixer.music.load("sounds/voice/start.mp3")
+    pygame.mixer.music.play()
+    pygame.time.delay(3000)
+    take_picture()
+    pred = predict_contener()
+    syntethise(pred)
+
 if __name__ == "__main__" :
+    #syntethise(1)
     r = sr.Recognizer()
     pygame.mixer.init()
-    pygame.mixer.music.load("sounds/generated/intro.mp3")
+    pygame.mixer.music.load("sounds/voice/start.mp3")
+    init_motion_sensor()
     while (1):
+        shutdown_led()
+        if detect_move() == 1:
+            scenario_1()
         with sr.Microphone() as src:
             print("speak")
-            audio = r.listen(src)
-            print(type(audio))
-            print("end")
-
             try:
+                audio = r.listen(src, 0.5, 2)
+                print(type(audio))
+                print("end")
                 text = r.recognize_google(audio, language='fr-FR')
                 print(text)
                 print("TEXT " + text)
                 ratio = fuzz.ratio(text, "ok cycle")
-                if ratio > 50:
-                    pygame.mixer.music.play()
-                    pygame.time.delay(5000)
-                    take_picture()
-                    pred = predict_contener()
-                    syntethise(pred)
+                if ratio > 70:
+                    scenario_1()
 
-            except:
-                print("error")
+            except Exception:
+                #traceback.print_exc()
                 pass
