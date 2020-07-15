@@ -1,7 +1,7 @@
 # cycle-project
 Projet annuel de 4IABD pour la classification des déchets ménagers
 
-Datasets:
+Initial Datasets (in trash_classification folder):
 - Custom (1000+ images)
 - Waste Classification (https://www.kaggle.com/techsash/waste-classification-data)
 - TrashNet (https://www.kaggle.com/asdasdasasdas/garbage-classification)
