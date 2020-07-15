@@ -1,7 +1,7 @@
 from picamera import PiCamera
 from time import sleep
 
-item = "mousse"
+item = "empty"
 
 with PiCamera() as camera:
     camera.start_preview()
@@ -10,4 +10,4 @@ with PiCamera() as camera:
     for i in range(0, 50):
         sleep(1)
         #my_file = open("dataset/" + item + "_" + str(i) + ".jpg", 'wb')
-        camera.capture("dataset/" + item + "_" + str(i) + ".jpg")
+        camera.capture("empty/" + item + "_" + str(i) + ".jpg")
